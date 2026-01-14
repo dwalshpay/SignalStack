@@ -136,6 +136,7 @@ export interface ScoreLeadResponse {
   platformStatus: {
     metaCapi: {
       sent: boolean;
+      queued: boolean;
       eventId?: string;
       error?: string;
     };

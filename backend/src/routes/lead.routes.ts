@@ -9,7 +9,9 @@ import { getEventValue } from '../services/calculation.service.js';
 import { hashEmail, hashPhone, getEmailType } from '../services/hashing.service.js';
 import { encrypt } from '../utils/crypto.js';
 import { logger } from '../utils/logger.js';
+import { enqueueMetaCapiEvent } from '../queues/index.js';
 import type { ScoreLeadInput, ScoreLeadResponse, FunnelStep } from '../types/index.js';
+import type { MetaCapiJobData } from '../types/meta-capi.types.js';
 
 export const leadRoutes = Router();
 
@@ -158,7 +160,34 @@ leadRoutes.post(
         return { lead: newLead, event: newEvent };
       });
 
-      // TODO: Send to Meta CAPI (async, don't block response)
+      // Queue Meta CAPI event asynchronously (fire and forget for response speed)
+      const metaCapiJobData: MetaCapiJobData = {
+        conversionEventId: event.id,
+        organizationId,
+        leadId: lead.id,
+        event: {
+          name: input.event_name,
+          id: eventId,
+          value: adjustedValue,
+          currency: metrics.currency,
+          timestamp: Date.now(),
+          pageUrl: input.page_url,
+        },
+        userData: {
+          emailHash: emailHash ?? undefined,
+          phoneHash: phoneHash ?? undefined,
+          fbc: input.fbc,
+          fbp: input.fbp,
+          ipAddress: input.ip_address,
+          userAgent: input.user_agent,
+          externalId: input.external_id,
+        },
+      };
+
+      enqueueMetaCapiEvent(metaCapiJobData).catch((err) => {
+        logger.error({ msg: 'Failed to enqueue Meta CAPI event', error: err.message });
+      });
+
       // TODO: Queue for Google Ads upload
 
       const processingTimeMs = Date.now() - startTime;
@@ -181,8 +210,9 @@ leadRoutes.post(
         },
         platformStatus: {
           metaCapi: {
-            sent: false, // TODO: Implement
-            eventId: undefined,
+            sent: false,
+            queued: true,
+            eventId,
             error: undefined,
           },
           googleAds: {
