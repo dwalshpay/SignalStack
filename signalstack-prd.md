@@ -30,9 +30,9 @@
 
 **Last Updated:** January 14, 2026
 
-### Current Phase: Phase 2 Complete ✅
+### Current Phase: Phase 3 Complete ✅
 
-Phase 1 (Value Calculator) and Phase 2 (Implementation Specs & Filtering) are fully implemented.
+Phases 1-3 are fully implemented. SignalStack is now a complete client-side application with value calculation, implementation spec generation, GTM validation, and lead scoring capabilities.
 
 ### Tech Stack (Implemented)
 
@@ -115,7 +115,35 @@ Phase 1 (Value Calculator) and Phase 2 (Implementation Specs & Filtering) are fu
 | - JSON export | ✅ Done | For GA4 API |
 | - Documentation | ✅ Done | Setup instructions |
 
-#### Phase 3-4: Not Started
+#### Phase 3: Validation & Lead Scoring ✅ Complete
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **3.1 GTM Container Validator** | ✅ Done | |
+| - JSON file upload | ✅ Done | Drag-and-drop or file picker |
+| - Parse container structure | ✅ Done | Extract tags, triggers, variables |
+| - Validation checks (8 types) | ✅ Done | Error/Warning/Info severity levels |
+| - Match key detection | ✅ Done | Auto-detect available EMQ fields |
+| - EMQ score estimate | ✅ Done | Based on detected match keys |
+| - Recommendations | ✅ Done | Actionable improvement suggestions |
+| **3.2 EMQ Score Estimator** | ✅ Done | |
+| - Interactive match key toggles | ✅ Done | Visual checkbox interface |
+| - Real-time score calculation | ✅ Done | Updates as keys are toggled |
+| - Visual gauge display | ✅ Done | Circular progress with rating |
+| - Improvement recommendations | ✅ Done | Prioritized by EMQ weight |
+| **3.3 Lead Scoring Rule Builder** | ✅ Done | |
+| - Three category tabs | ✅ Done | Firmographic/Behavioural/Engagement |
+| - Drag-and-drop reordering | ✅ Done | @dnd-kit/sortable |
+| - Add/edit/delete rules | ✅ Done | Full CRUD with inline form |
+| - Toggle rules on/off | ✅ Done | Quick enable/disable |
+| - Scoring preview | ✅ Done | Score-to-multiplier visualization |
+| - Default rule templates | ✅ Done | 10 pre-built rules |
+| **3.4 Scoring Implementation Export** | ✅ Done | |
+| - GTM Custom JS Variable | ✅ Done | Complete scoring logic |
+| - DataLayer integration code | ✅ Done | Push scoring results |
+| - Setup guide | ✅ Done | Step-by-step instructions |
+
+#### Phase 4: Not Started
 
 ### Project Structure
 
@@ -129,15 +157,19 @@ signalstack/
 │   │   ├── funnel/          # FunnelBuilder, FunnelStep, DragHandle
 │   │   ├── segments/        # SegmentList, SegmentCard
 │   │   ├── results/         # ScenarioCompare, ScenarioPanel
-│   │   └── implementation/  # Phase 2 tools (CodeBlock, DataLayerGenerator, etc.)
+│   │   ├── implementation/  # Phase 2 tools (CodeBlock, DataLayerGenerator, etc.)
+│   │   └── validation/      # Phase 3 tools (GTMValidator, EMQEstimator, ScoringRuleBuilder, etc.)
 │   ├── hooks/               # useCalculator, useFunnel, useScenarios, useExport
 │   ├── lib/
-│   │   ├── generators/      # Phase 2 generators (dataLayer, gtmConfig, metaCAPI, etc.)
+│   │   ├── generators/      # Code generators (dataLayer, gtmConfig, metaCAPI, scoringTemplate)
+│   │   ├── emqCalculator.ts # EMQ score calculation
+│   │   ├── gtmValidator.ts  # GTM container parsing and validation
+│   │   ├── scoringCalculations.ts # Lead scoring engine
 │   │   └── ...              # calculations, constants, validation, export
 │   ├── store/               # Zustand store (useStore.ts)
-│   ├── types/               # TypeScript interfaces, scenario types
-│   ├── pages/               # Calculator.tsx, Implementation.tsx
-│   ├── App.tsx              # React Router with /calculator and /implementation routes
+│   ├── types/               # TypeScript interfaces (incl. validation & scoring types)
+│   ├── pages/               # Calculator.tsx, Implementation.tsx, Validation.tsx
+│   ├── App.tsx              # React Router with /calculator, /implementation, /validation routes
 │   ├── main.tsx
 │   └── index.css
 ├── package.json
@@ -156,10 +188,13 @@ npm run build  # Production build
 
 ### Next Steps
 
-1. Begin Phase 3: Validation & Lead Scoring
-   - GTM Container Validator
-   - Lead Scoring Engine
-   - Score-to-Value Mapping
+1. Begin Phase 4: Live Integrations
+   - Set up Node.js backend with Express
+   - Add PostgreSQL database with Prisma ORM
+   - Implement Amplitude integration
+   - Implement Salesforce integration
+   - Add real-time lead scoring webhook
+   - Build monitoring dashboard
 
 ---
 
