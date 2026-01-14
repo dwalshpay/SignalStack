@@ -9,6 +9,7 @@ import type { CalculatedValue } from '@/types';
 
 interface UseCalculatorReturn {
   calculatedValues: CalculatedValue[];
+  values: CalculatedValue[]; // Alias for calculatedValues
   derivedMetrics: DerivedMetrics;
   isValid: boolean;
 }
@@ -33,6 +34,7 @@ export function useCalculator(): UseCalculatorReturn {
 
   return {
     calculatedValues,
+    values: calculatedValues, // Alias for convenience
     derivedMetrics,
     isValid,
   };
