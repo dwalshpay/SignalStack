@@ -268,3 +268,6 @@ export function toNumber(value: Decimal | null | undefined): number | null {
   if (value === null || value === undefined) return null;
   return Number(value);
 }
+
+// Re-export platform-specific types
+export * from './google-ads.types.js';

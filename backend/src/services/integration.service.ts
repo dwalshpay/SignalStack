@@ -3,6 +3,7 @@ import { decrypt } from '../utils/crypto.js';
 import { logger } from '../utils/logger.js';
 import type { IntegrationType, IntegrationStatus } from '@prisma/client';
 import type { MetaCapiCredentials } from '../types/meta-capi.types.js';
+import type { GoogleAdsCredentials } from '../types/google-ads.types.js';
 
 export interface IntegrationWithCredentials<T> {
   id: string;
@@ -53,6 +54,12 @@ export async function getMetaCapiIntegration(
   organizationId: string
 ): Promise<IntegrationWithCredentials<MetaCapiCredentials> | null> {
   return getActiveIntegration<MetaCapiCredentials>(organizationId, 'META_CAPI');
+}
+
+export async function getGoogleAdsIntegration(
+  organizationId: string
+): Promise<IntegrationWithCredentials<GoogleAdsCredentials> | null> {
+  return getActiveIntegration<GoogleAdsCredentials>(organizationId, 'GOOGLE_ADS');
 }
 
 export async function updateIntegrationStatus(

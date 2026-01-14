@@ -9,9 +9,10 @@ import { getEventValue } from '../services/calculation.service.js';
 import { hashEmail, hashPhone, getEmailType } from '../services/hashing.service.js';
 import { encrypt } from '../utils/crypto.js';
 import { logger } from '../utils/logger.js';
-import { enqueueMetaCapiEvent } from '../queues/index.js';
+import { enqueueMetaCapiEvent, enqueueGoogleAdsEvent } from '../queues/index.js';
 import type { ScoreLeadInput, ScoreLeadResponse, FunnelStep } from '../types/index.js';
 import type { MetaCapiJobData } from '../types/meta-capi.types.js';
+import type { GoogleAdsJobData } from '../types/google-ads.types.js';
 
 export const leadRoutes = Router();
 
@@ -188,7 +189,31 @@ leadRoutes.post(
         logger.error({ msg: 'Failed to enqueue Meta CAPI event', error: err.message });
       });
 
-      // TODO: Queue for Google Ads upload
+      // Queue Google Ads event if GCLID is present
+      if (input.gclid) {
+        const googleAdsJobData: GoogleAdsJobData = {
+          conversionEventId: event.id,
+          organizationId,
+          leadId: lead.id,
+          event: {
+            name: input.event_name,
+            id: eventId,
+            value: adjustedValue,
+            currency: metrics.currency,
+            timestamp: Date.now(),
+          },
+          userData: {
+            gclid: input.gclid,
+            emailHash: emailHash ?? undefined,
+            phoneHash: phoneHash ?? undefined,
+            externalId: input.external_id,
+          },
+        };
+
+        enqueueGoogleAdsEvent(googleAdsJobData).catch((err) => {
+          logger.error({ msg: 'Failed to enqueue Google Ads event', error: err.message });
+        });
+      }
 
       const processingTimeMs = Date.now() - startTime;
 
@@ -216,7 +241,7 @@ leadRoutes.post(
             error: undefined,
           },
           googleAds: {
-            queued: !!input.gclid, // TODO: Implement actual queueing
+            queued: !!input.gclid,
             gclidCaptured: !!input.gclid,
           },
         },
