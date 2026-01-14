@@ -136,3 +136,54 @@ export interface PlatformConfig {
   google: PlatformThresholds;
   meta: PlatformThresholds;
 }
+
+// Monitoring Types (Phase 4)
+export interface MonitoringOverview {
+  period: {
+    start: string;
+    end: string;
+  };
+  events: {
+    total: number;
+    byPlatform: {
+      meta: number;
+      google: number;
+    };
+    byEvent: Record<string, number>;
+    trend7d: number[];
+  };
+  emq: {
+    current: number;
+    trend7d: number[];
+    target: number;
+  };
+  matchRates: {
+    meta: number;
+    google: number;
+  };
+  scores: {
+    average: number;
+    distribution: {
+      low: number;
+      medium: number;
+      high: number;
+    };
+  };
+  values: {
+    total: number;
+    bySegment: Record<string, number>;
+    average: number;
+  };
+  alerts: {
+    activeIncidents: number;
+    bySeverity: {
+      info: number;
+      warning: number;
+      critical: number;
+    };
+  };
+  syncStatus: Record<string, {
+    status: string;
+    lastSync: string | null;
+  }>;
+}

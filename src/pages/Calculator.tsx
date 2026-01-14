@@ -1,16 +1,23 @@
 import React, { useCallback } from 'react';
 import { MainLayout } from '@/components/layout';
-import { Card, VolumeStatusBadge } from '@/components/common';
+import { Card, VolumeStatusBadge, useToast } from '@/components/common';
 import { BusinessMetricsEditor } from '@/components/metrics';
 import { FunnelBuilder } from '@/components/funnel';
 import { SegmentList } from '@/components/segments';
 import { ScenarioCompare } from '@/components/results';
 import { useStore } from '@/store/useStore';
-import { useCalculator, useFunnel } from '@/hooks';
-import { downloadJSON, downloadCSV } from '@/lib/export';
+import { useCalculator, useFunnel, useDataSync } from '@/hooks';
+import { downloadCSV } from '@/lib/export';
 import { formatCurrency } from '@/lib/calculations';
 
 export const Calculator: React.FC = () => {
+  const { addToast } = useToast();
+
+  // Data sync with backend
+  const { isLoading, syncToBackend } = useDataSync({
+    autoSync: true,
+    onError: (err) => addToast('error', err),
+  });
   // Funnel state and actions
   const {
     funnel,
@@ -40,9 +47,28 @@ export const Calculator: React.FC = () => {
     downloadCSV(calculatedValues, segments, metrics.currency);
   }, [calculatedValues, segments, metrics.currency]);
 
-  const handleSave = useCallback(() => {
-    downloadJSON({ funnel, metrics, segments });
-  }, [funnel, metrics, segments]);
+  const handleSave = useCallback(async () => {
+    try {
+      await syncToBackend();
+      addToast('success', 'Changes saved successfully');
+    } catch {
+      // Error already handled by useDataSync
+    }
+  }, [syncToBackend, addToast]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-4 text-sm text-gray-600">Loading your data...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout onSave={handleSave} onExport={handleExport}>
