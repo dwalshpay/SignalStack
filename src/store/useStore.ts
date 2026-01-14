@@ -4,7 +4,8 @@ import type {
   FunnelStep,
   BusinessMetrics,
   AudienceSegment,
-  ScoringRule
+  ScoringRule,
+  GTMValidationResult
 } from '@/types';
 import {
   DEFAULT_FUNNEL,
@@ -21,6 +22,10 @@ interface StoreState {
   metrics: BusinessMetrics;
   segments: AudienceSegment[];
   scoringRules: ScoringRule[];
+
+  // Validation state (Phase 3)
+  gtmValidationResult: GTMValidationResult | null;
+  emqMatchKeys: Record<string, boolean>;
 
   // Funnel actions
   setFunnel: (funnel: FunnelStep[]) => void;
@@ -39,12 +44,37 @@ interface StoreState {
   updateSegment: (id: string, updates: Partial<AudienceSegment>) => void;
   removeSegment: (id: string) => void;
 
-  // Scoring rules actions (Phase 3 prep)
+  // Scoring rules actions (Phase 3)
   setScoringRules: (rules: ScoringRule[]) => void;
+  addScoringRule: (rule: ScoringRule) => void;
+  updateScoringRule: (id: string, updates: Partial<ScoringRule>) => void;
+  removeScoringRule: (id: string) => void;
+  reorderScoringRules: (startIndex: number, endIndex: number) => void;
+  toggleScoringRule: (id: string) => void;
+
+  // Validation actions (Phase 3)
+  setGTMValidationResult: (result: GTMValidationResult | null) => void;
+  setEMQMatchKey: (key: string, available: boolean) => void;
+  resetValidation: () => void;
 
   // Global actions
   reset: () => void;
 }
+
+// Default EMQ match keys state
+const defaultEMQMatchKeys: Record<string, boolean> = {
+  email: false,
+  fbc: false,
+  phone: false,
+  fbp: false,
+  external_id: false,
+  ip_address: false,
+  user_agent: false,
+  city: false,
+  state: false,
+  zip: false,
+  country: false,
+};
 
 // Initial state
 const initialState = {
@@ -52,6 +82,8 @@ const initialState = {
   metrics: DEFAULT_METRICS,
   segments: DEFAULT_SEGMENTS,
   scoringRules: [] as ScoringRule[],
+  gtmValidationResult: null as GTMValidationResult | null,
+  emqMatchKeys: defaultEMQMatchKeys,
 };
 
 export const useStore = create<StoreState>()(
@@ -114,6 +146,45 @@ export const useStore = create<StoreState>()(
       // Scoring rules actions
       setScoringRules: (scoringRules) => set({ scoringRules }),
 
+      addScoringRule: (rule) => set((state) => ({
+        scoringRules: [...state.scoringRules, rule]
+      })),
+
+      updateScoringRule: (id, updates) => set((state) => ({
+        scoringRules: state.scoringRules.map((rule) =>
+          rule.id === id ? { ...rule, ...updates } : rule
+        )
+      })),
+
+      removeScoringRule: (id) => set((state) => ({
+        scoringRules: state.scoringRules.filter((rule) => rule.id !== id)
+      })),
+
+      reorderScoringRules: (startIndex, endIndex) => set((state) => {
+        const result = Array.from(state.scoringRules);
+        const [removed] = result.splice(startIndex, 1);
+        result.splice(endIndex, 0, removed);
+        return { scoringRules: result };
+      }),
+
+      toggleScoringRule: (id) => set((state) => ({
+        scoringRules: state.scoringRules.map((rule) =>
+          rule.id === id ? { ...rule, enabled: !rule.enabled } : rule
+        )
+      })),
+
+      // Validation actions (Phase 3)
+      setGTMValidationResult: (gtmValidationResult) => set({ gtmValidationResult }),
+
+      setEMQMatchKey: (key, available) => set((state) => ({
+        emqMatchKeys: { ...state.emqMatchKeys, [key]: available }
+      })),
+
+      resetValidation: () => set({
+        gtmValidationResult: null,
+        emqMatchKeys: defaultEMQMatchKeys
+      }),
+
       // Reset to defaults
       reset: () => set(initialState),
     }),
@@ -129,3 +200,6 @@ export const useStore = create<StoreState>()(
 export const useFunnelSteps = () => useStore((state) => state.funnel);
 export const useBusinessMetrics = () => useStore((state) => state.metrics);
 export const useSegments = () => useStore((state) => state.segments);
+export const useScoringRules = () => useStore((state) => state.scoringRules);
+export const useGTMValidationResult = () => useStore((state) => state.gtmValidationResult);
+export const useEMQMatchKeys = () => useStore((state) => state.emqMatchKeys);

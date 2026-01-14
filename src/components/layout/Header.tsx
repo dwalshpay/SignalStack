@@ -11,6 +11,7 @@ export const Header: React.FC<HeaderProps> = ({ onSave, onExport }) => {
   const location = useLocation();
   const isCalculator = location.pathname === '/calculator' || location.pathname === '/';
   const isImplementation = location.pathname.startsWith('/implementation');
+  const isValidation = location.pathname.startsWith('/validation');
 
   return (
     <header className="bg-white border-b border-gray-200">
@@ -40,6 +41,16 @@ export const Header: React.FC<HeaderProps> = ({ onSave, onExport }) => {
                 }`}
               >
                 Implementation
+              </Link>
+              <Link
+                to="/validation"
+                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isValidation
+                    ? 'bg-primary-100 text-primary-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                Validation
               </Link>
             </nav>
           </div>

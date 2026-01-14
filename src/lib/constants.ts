@@ -119,3 +119,59 @@ export const CONSUMER_EMAIL_DOMAINS = {
 // Storage key for Zustand persist
 export const STORAGE_KEY = 'signalstack-storage';
 export const STORAGE_VERSION = 1;
+
+// EMQ (Event Match Quality) weights for Meta CAPI (Phase 3)
+export const EMQ_WEIGHTS: Record<string, { weight: number; label: string }> = {
+  email: { weight: 2.5, label: 'Email (hashed)' },
+  fbc: { weight: 2.0, label: 'Click ID (fbc)' },
+  phone: { weight: 1.5, label: 'Phone (hashed)' },
+  fbp: { weight: 1.0, label: 'Browser ID (fbp)' },
+  external_id: { weight: 0.8, label: 'External ID' },
+  ip_address: { weight: 0.5, label: 'IP Address' },
+  user_agent: { weight: 0.5, label: 'User Agent' },
+  city: { weight: 0.3, label: 'City' },
+  state: { weight: 0.3, label: 'State' },
+  zip: { weight: 0.3, label: 'Zip Code' },
+  country: { weight: 0.2, label: 'Country' },
+};
+
+export const EMQ_BASE_SCORE = 3.0;
+export const EMQ_MAX_SCORE = 9.3;
+
+// Lead scoring constants (Phase 3)
+export const SCORING = {
+  minMultiplier: 0.1,
+  maxMultiplier: 2.0,
+  maxScore: 100,
+};
+
+// Default scoring rule templates (Phase 3)
+import type { ScoringRule } from '@/types';
+
+export const DEFAULT_SCORING_RULES: ScoringRule[] = [
+  // Firmographic
+  { id: 'rule-1', category: 'firmographic', field: 'email_type', condition: 'equals:business', points: 15, enabled: true },
+  { id: 'rule-2', category: 'firmographic', field: 'company_size', condition: 'greater_than:100', points: 20, enabled: true },
+  { id: 'rule-3', category: 'firmographic', field: 'industry', condition: 'in_list:technology,finance,healthcare', points: 15, enabled: true },
+  // Behavioural
+  { id: 'rule-4', category: 'behavioural', field: 'page_path', condition: 'contains:/pricing', points: 10, enabled: true },
+  { id: 'rule-5', category: 'behavioural', field: 'page_path', condition: 'contains:/demo', points: 15, enabled: true },
+  { id: 'rule-6', category: 'behavioural', field: 'session_count', condition: 'greater_than:1', points: 10, enabled: true },
+  { id: 'rule-7', category: 'behavioural', field: 'time_on_site', condition: 'greater_than:300', points: 10, enabled: true },
+  // Engagement
+  { id: 'rule-8', category: 'engagement', field: 'form_type', condition: 'equals:demo_request', points: 25, enabled: true },
+  { id: 'rule-9', category: 'engagement', field: 'content_download', condition: 'equals:case_study', points: 15, enabled: true },
+  { id: 'rule-10', category: 'engagement', field: 'cta_clicked', condition: 'equals:true', points: 10, enabled: true },
+];
+
+// GTM Validation check codes (Phase 3)
+export const VALIDATION_CHECKS = {
+  MISSING_EVENT: { code: 'MISSING_EVENT', severity: 'error' as const, title: 'Missing Funnel Event' },
+  NO_EVENT_VALUE: { code: 'NO_EVENT_VALUE', severity: 'warning' as const, title: 'Missing Event Value' },
+  NO_EVENT_ID: { code: 'NO_EVENT_ID', severity: 'error' as const, title: 'Missing Event ID for Deduplication' },
+  NO_MATCH_KEYS: { code: 'NO_MATCH_KEYS', severity: 'warning' as const, title: 'Missing Match Keys' },
+  UNHASHED_PII: { code: 'UNHASHED_PII', severity: 'error' as const, title: 'Unhashed PII Detected' },
+  NO_CONSENT_MODE: { code: 'NO_CONSENT_MODE', severity: 'warning' as const, title: 'Consent Mode Not Configured' },
+  NO_CAPI: { code: 'NO_CAPI', severity: 'info' as const, title: 'No Server-Side Tags' },
+  BROAD_TRIGGER: { code: 'BROAD_TRIGGER', severity: 'warning' as const, title: 'Overly Broad Trigger' },
+};

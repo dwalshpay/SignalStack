@@ -51,13 +51,68 @@ export interface CalculatedValue {
 export type VolumeStatus = 'sufficient' | 'borderline' | 'insufficient';
 
 // Lead scoring rule (Phase 3)
+export type ScoringCategory = 'firmographic' | 'behavioural' | 'engagement';
+
 export interface ScoringRule {
   id: string;
-  category: 'firmographic' | 'behavioural' | 'engagement';
+  category: ScoringCategory;
   field: string;
   condition: string;
   points: number;
   enabled: boolean;
+}
+
+// GTM Validation Types (Phase 3)
+export type ValidationSeverity = 'error' | 'warning' | 'info';
+
+export interface ValidationIssue {
+  id: string;
+  severity: ValidationSeverity;
+  code: string;
+  title: string;
+  description: string;
+  recommendation: string;
+  affectedItems?: string[];
+}
+
+export interface GTMValidationResult {
+  isValid: boolean;
+  containerName: string;
+  containerVersion: string;
+  issueCount: {
+    error: number;
+    warning: number;
+    info: number;
+  };
+  issues: ValidationIssue[];
+  detectedMatchKeys: string[];
+  estimatedEMQ: number;
+  parsedAt: string;
+}
+
+// EMQ Types (Phase 3)
+export interface EMQMatchKey {
+  key: string;
+  label: string;
+  weight: number;
+  available: boolean;
+}
+
+export type EMQRating = 'poor' | 'fair' | 'good' | 'excellent';
+
+export interface EMQEstimate {
+  score: number;
+  maxScore: number;
+  matchKeys: EMQMatchKey[];
+  rating: EMQRating;
+}
+
+// Scoring Result (Phase 3)
+export interface ScoringResult {
+  totalPoints: number;
+  normalizedScore: number;
+  multiplier: number;
+  appliedRules: { ruleId: string; points: number }[];
 }
 
 // Persisted state structure
