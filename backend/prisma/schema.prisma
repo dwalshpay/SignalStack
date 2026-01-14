@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CORE ENTITIES
+// ============================================
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  users           User[]
+  funnels         Funnel[]
+  businessMetrics BusinessMetrics[]
+  segments        AudienceSegment[]
+  scoringRules    ScoringRule[]
+  leads           Lead[]
+  integrations    Integration[]
+  signalMetrics   SignalMetric[]
+  alerts          Alert[]
+  apiKeys         ApiKey[]
+  invites         OrganizationInvite[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String    @map("password_hash")
+  name           String?
+  role           UserRole  @default(MEMBER)
+  organizationId String    @map("organization_id")
+  lastLoginAt    DateTime? @map("last_login_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model OrganizationInvite {
+  id             String   @id @default(uuid())
+  email          String
+  role           UserRole @default(MEMBER)
+  organizationId String   @map("organization_id")
+  token          String   @unique
+  expiresAt      DateTime @map("expires_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([token])
+  @@map("organization_invites")
+}
+
+model ApiKey {
+  id             String    @id @default(uuid())
+  name           String
+  keyHash        String    @unique @map("key_hash")
+  keyPrefix      String    @map("key_prefix") // First 8 chars for identification
+  organizationId String    @map("organization_id")
+  scopes         String[]  @default(["score-lead"])
+  expiresAt      DateTime? @map("expires_at")
+  lastUsedAt     DateTime? @map("last_used_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("api_keys")
+}
+
+// ============================================
+// FUNNEL & METRICS
+// ============================================
+
+model Funnel {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  name           String
+  isDefault      Boolean  @default(false) @map("is_default")
+  steps          Json     // Array of FunnelStep objects
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("funnels")
+}
+
+model BusinessMetrics {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  ltv            Decimal      @db.Decimal(12, 2)
+  ltvCacRatio    Decimal      @map("ltv_cac_ratio") @db.Decimal(5, 2)
+  grossMargin    Decimal      @default(100) @map("gross_margin") @db.Decimal(5, 2)
+  currency       String       @default("AUD") @db.VarChar(3)
+  effectiveFrom  DateTime     @map("effective_from")
+  effectiveTo    DateTime?    @map("effective_to")
+  source         MetricSource @default(MANUAL)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, effectiveFrom])
+  @@map("business_metrics")
+}
+
+enum MetricSource {
+  MANUAL
+  SALESFORCE
+  AMPLITUDE
+}
+
+model AudienceSegment {
+  id                      String   @id @default(uuid())
+  organizationId          String   @map("organization_id")
+  name                    String
+  multiplier              Decimal  @db.Decimal(5, 2)
+  identificationType      String   @map("identification_type")
+  identificationCondition String   @map("identification_condition")
+  isActive                Boolean  @default(true) @map("is_active")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("audience_segments")
+}
+
+model ScoringRule {
+  id             String          @id @default(uuid())
+  organizationId String          @map("organization_id")
+  category       ScoringCategory
+  field          String
+  condition      String
+  points         Int
+  enabled        Boolean         @default(true)
+  order          Int             @default(0)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, enabled])
+  @@map("scoring_rules")
+}
+
+enum ScoringCategory {
+  FIRMOGRAPHIC
+  BEHAVIORAL
+  ENGAGEMENT
+}
+
+// ============================================
+// LEADS & CONVERSIONS
+// ============================================
+
+model Lead {
+  id              String   @id @default(uuid())
+  organizationId  String   @map("organization_id")
+  emailHash       String?  @map("email_hash") @db.VarChar(64)
+  phoneHash       String?  @map("phone_hash") @db.VarChar(64)
+  externalId      String?  @map("external_id")
+  score           Int?
+  normalizedScore Int?     @map("normalized_score")
+  multiplier      Decimal? @db.Decimal(4, 2)
+  value           Decimal? @db.Decimal(12, 2)
+  segment         String?
+  signals         Json?    // Applied scoring signals
+  rawData         Bytes?   @map("raw_data") // Encrypted lead data
+  source          String?  // utm_source
+  campaign        String?  // utm_campaign
+  medium          String?  // utm_medium
+  gclid           String?  @db.VarChar(255)
+  fbc             String?  @db.VarChar(255)
+  fbp             String?  @db.VarChar(255)
+  ipAddress       String?  @map("ip_address")
+  userAgent       String?  @map("user_agent")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  events       ConversionEvent[]
+
+  @@index([organizationId, createdAt])
+  @@index([emailHash])
+  @@index([gclid])
+  @@map("leads")
+}
+
+model ConversionEvent {
+  id           String    @id @default(uuid())
+  leadId       String    @map("lead_id")
+  eventName    String    @map("event_name") @db.VarChar(100)
+  eventId      String    @map("event_id") @db.VarChar(100) // For deduplication
+  value        Decimal   @db.Decimal(12, 2)
+  currency     String    @default("AUD") @db.VarChar(3)
+  pageUrl      String?   @map("page_url")
+  metaSentAt   DateTime? @map("meta_sent_at")
+  metaEventId  String?   @map("meta_event_id") // Response from Meta
+  googleSentAt DateTime? @map("google_sent_at")
+  googleStatus String?   @map("google_status")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([eventName, createdAt])
+  @@index([metaSentAt])
+  @@index([googleSentAt])
+  @@map("conversion_events")
+}
+
+// ============================================
+// INTEGRATIONS
+// ============================================
+
+model Integration {
+  id             String            @id @default(uuid())
+  organizationId String            @map("organization_id")
+  type           IntegrationType
+  name           String
+  credentials    Bytes             // Encrypted credentials
+  settings       Json              @default("{}")
+  status         IntegrationStatus @default(PENDING)
+  lastSyncAt     DateTime?         @map("last_sync_at")
+  lastError      String?           @map("last_error")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  syncLogs     SyncLog[]
+
+  @@unique([organizationId, type])
+  @@map("integrations")
+}
+
+enum IntegrationType {
+  AMPLITUDE
+  SALESFORCE
+  META_CAPI
+  GOOGLE_ADS
+  CLEARBIT
+}
+
+enum IntegrationStatus {
+  PENDING
+  ACTIVE
+  ERROR
+  DISABLED
+}
+
+model SyncLog {
+  id               String     @id @default(uuid())
+  integrationId    String     @map("integration_id")
+  status           SyncStatus
+  recordsProcessed Int        @default(0) @map("records_processed")
+  recordsFailed    Int        @default(0) @map("records_failed")
+  error            String?
+  metadata         Json?
+  startedAt        DateTime   @map("started_at")
+  completedAt      DateTime?  @map("completed_at")
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([integrationId, startedAt])
+  @@map("sync_logs")
+}
+
+enum SyncStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// ============================================
+// MONITORING & ALERTS
+// ============================================
+
+model SignalMetric {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  date           DateTime @db.Date
+  platform       Platform
+  eventName      String   @map("event_name")
+  eventsSent     Int      @default(0) @map("events_sent")
+  eventsMatched  Int      @default(0) @map("events_matched")
+  avgEmq         Decimal? @map("avg_emq") @db.Decimal(3, 1)
+  avgValue       Decimal? @map("avg_value") @db.Decimal(12, 2)
+  avgScore       Decimal? @map("avg_score") @db.Decimal(5, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, date, platform, eventName])
+  @@index([organizationId, date])
+  @@map("signal_metrics")
+}
+
+enum Platform {
+  META
+  GOOGLE
+}
+
+model Alert {
+  id              String        @id @default(uuid())
+  organizationId  String        @map("organization_id")
+  type            AlertType
+  metric          String
+  condition       String        // e.g., "drops_below:7.0"
+  threshold       Decimal       @db.Decimal(10, 2)
+  windowHours     Int           @map("window_hours")
+  severity        AlertSeverity
+  enabled         Boolean       @default(true)
+  lastTriggeredAt DateTime?     @map("last_triggered_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  incidents    AlertIncident[]
+
+  @@index([organizationId, enabled])
+  @@map("alerts")
+}
+
+enum AlertType {
+  EMQ_DROP
+  VOLUME_DROP
+  RATE_CHANGE
+  SYNC_FAILURE
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model AlertIncident {
+  id           String    @id @default(uuid())
+  alertId      String    @map("alert_id")
+  currentValue Decimal   @map("current_value") @db.Decimal(10, 2)
+  message      String
+  resolvedAt   DateTime? @map("resolved_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@index([alertId, createdAt])
+  @@map("alert_incidents")
+}

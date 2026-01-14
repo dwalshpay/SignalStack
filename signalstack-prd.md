@@ -30,14 +30,15 @@
 
 **Last Updated:** January 14, 2026
 
-### Current Phase: Phase 3 Complete ✅
+### Current Phase: Phase 4 In Progress 🚧
 
-Phases 1-3 are fully implemented. SignalStack is now a complete client-side application with value calculation, implementation spec generation, GTM validation, and lead scoring capabilities.
+Phases 1-3 are fully implemented. Phase 4 backend foundation is complete with authentication, data APIs, and lead scoring webhook. Meta CAPI and Google Ads integrations are next.
 
 ### Tech Stack (Implemented)
 
 | Component | Technology | Version |
 |-----------|------------|---------|
+| **Frontend** | | |
 | Build Tool | Vite | 7.3.1 |
 | Frontend | React | 19.2.3 |
 | Language | TypeScript | 5.9.3 |
@@ -47,7 +48,17 @@ Phases 1-3 are fully implemented. SignalStack is now a complete client-side appl
 | Charts | Recharts | 3.6.0 |
 | Forms | React Hook Form | 7.71.1 |
 | File Export | FileSaver.js | 2.0.5 |
-| Routing | React Router DOM | 6.x |
+| Routing | React Router DOM | 7.12.0 |
+| **Backend (Phase 4)** | | |
+| Runtime | Node.js | 22.x |
+| Framework | Express | 5.1.0 |
+| Database ORM | Prisma | 6.9.0 |
+| Database | PostgreSQL | 16 |
+| Job Queue | BullMQ | 5.34.0 |
+| Caching/Queue | Redis | 7 |
+| Auth | JWT | jsonwebtoken 9.0.2 |
+| Validation | Zod | 3.25.28 |
+| Logging | Pino | 9.6.0 |
 
 ### Implementation Progress
 
@@ -143,13 +154,66 @@ Phases 1-3 are fully implemented. SignalStack is now a complete client-side appl
 | - DataLayer integration code | ✅ Done | Push scoring results |
 | - Setup guide | ✅ Done | Step-by-step instructions |
 
-#### Phase 4: Not Started
+#### Phase 4: Live Integrations 🚧 In Progress
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **4.0 Backend Foundation** | ✅ Done | |
+| - Monorepo setup (npm workspaces) | ✅ Done | `/backend` folder |
+| - Express + TypeScript server | ✅ Done | Port 3001 |
+| - Prisma ORM with PostgreSQL | ✅ Done | 14 tables defined |
+| - Docker Compose (PostgreSQL + Redis) | ✅ Done | Dev environment |
+| **4.0.1 Authentication** | ✅ Done | |
+| - JWT auth (access + refresh tokens) | ✅ Done | 15min / 7d expiry |
+| - API key auth for webhooks | ✅ Done | `sk_live_*` format |
+| - Role-based access control | ✅ Done | ADMIN/MEMBER/VIEWER |
+| - Organization invites | ✅ Done | Token-based invites |
+| **4.0.2 Data APIs** | ✅ Done | |
+| - Funnel CRUD | ✅ Done | `/api/v1/funnels` |
+| - Business metrics CRUD | ✅ Done | `/api/v1/metrics` |
+| - Segments CRUD | ✅ Done | `/api/v1/segments` |
+| - Scoring rules CRUD | ✅ Done | `/api/v1/scoring-rules` |
+| **4.0.3 Core Services** | ✅ Done | |
+| - Scoring engine (ported from frontend) | ✅ Done | Same logic as Phase 3 |
+| - Value calculation engine | ✅ Done | Same formula as Phase 1 |
+| - PII hashing (SHA-256) | ✅ Done | Email, phone |
+| - Credential encryption (AES-256-GCM) | ✅ Done | Integration secrets |
+| **4.1 Lead Scoring Webhook** | ✅ Done | |
+| - POST `/api/v1/score-lead` endpoint | ✅ Done | API key auth |
+| - Real-time scoring | ✅ Done | <100ms target |
+| - Lead + event storage | ✅ Done | PostgreSQL |
+| - Rate limiting | ✅ Done | 500/min |
+| **4.2 Monitoring APIs** | ✅ Done | |
+| - Dashboard overview | ✅ Done | `/api/v1/monitoring/overview` |
+| - Events by day/platform | ✅ Done | `/api/v1/monitoring/events` |
+| - EMQ trend | ✅ Done | `/api/v1/monitoring/emq` |
+| - Score distribution | ✅ Done | `/api/v1/monitoring/scores` |
+| **4.3 Integration Management** | ✅ Done | |
+| - Integration CRUD | ✅ Done | `/api/v1/integrations` |
+| - Encrypted credential storage | ✅ Done | AES-256-GCM |
+| - Sync logs | ✅ Done | Per-integration history |
+| **4.4 Meta CAPI Integration** | 🔲 Pending | |
+| - Meta CAPI client | 🔲 Pending | Graph API v18.0 |
+| - Event sending from webhook | 🔲 Pending | Async send |
+| - Send status tracking | 🔲 Pending | Per-event status |
+| **4.5 Google Ads Integration** | 🔲 Pending | |
+| - Google Ads API client | 🔲 Pending | Offline conversions |
+| - BullMQ job queue | 🔲 Pending | Daily batch upload |
+| - GCLID tracking | 🔲 Pending | Capture + upload |
+| **4.6 Amplitude Integration** | 🔲 Deferred | |
+| **4.7 Salesforce Integration** | 🔲 Deferred | |
+| **4.8 Frontend Updates** | 🔲 Pending | |
+| - API client layer | 🔲 Pending | Token refresh |
+| - Auth state in Zustand | 🔲 Pending | Login/logout |
+| - Login/Register pages | 🔲 Pending | New routes |
+| - Monitoring dashboard | 🔲 Pending | Recharts |
+| - Settings page | 🔲 Pending | API keys, users |
 
 ### Project Structure
 
 ```
 signalstack/
-├── src/
+├── src/                     # Frontend (React)
 │   ├── components/
 │   │   ├── common/          # Button, Input, Select, Card, Badge, Table, Tooltip
 │   │   ├── layout/          # Header, MainLayout
@@ -167,34 +231,59 @@ signalstack/
 │   │   ├── scoringCalculations.ts # Lead scoring engine
 │   │   └── ...              # calculations, constants, validation, export
 │   ├── store/               # Zustand store (useStore.ts)
-│   ├── types/               # TypeScript interfaces (incl. validation & scoring types)
+│   ├── types/               # TypeScript interfaces
 │   ├── pages/               # Calculator.tsx, Implementation.tsx, Validation.tsx
-│   ├── App.tsx              # React Router with /calculator, /implementation, /validation routes
+│   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
-├── package.json
+├── backend/                 # Backend (Node.js/Express) - Phase 4
+│   ├── src/
+│   │   ├── index.ts         # Entry point
+│   │   ├── app.ts           # Express app configuration
+│   │   ├── config/          # database.ts, redis.ts
+│   │   ├── middleware/      # auth.ts, errorHandler.ts, rateLimit.ts
+│   │   ├── routes/          # auth, funnel, metrics, lead, integration, monitoring
+│   │   ├── services/        # scoring, calculation, hashing, auth
+│   │   ├── types/           # TypeScript interfaces
+│   │   └── utils/           # crypto, validation, logger
+│   ├── prisma/
+│   │   └── schema.prisma    # Database schema (14 tables)
+│   ├── package.json
+│   └── tsconfig.json
+├── docker-compose.yml       # PostgreSQL + Redis
+├── package.json             # Root (npm workspaces)
 ├── vite.config.ts
 ├── tsconfig.json
-├── tailwind.config.js
-└── postcss.config.js
+└── tailwind.config.js
 ```
 
 ### Commands
 
 ```bash
-npm run dev    # Start dev server (http://localhost:5173)
-npm run build  # Production build
+# Frontend
+npm run dev           # Start frontend dev server (http://localhost:5173)
+npm run build         # Production build
+
+# Backend
+npm run dev:backend   # Start backend dev server (http://localhost:3001)
+npm run dev:all       # Start both frontend and backend
+npm run db:migrate    # Run Prisma migrations
+npm run db:generate   # Generate Prisma client
+npm run db:studio     # Open Prisma Studio
+
+# Docker (PostgreSQL + Redis)
+docker compose up -d  # Start databases
+docker compose down   # Stop databases
 ```
 
 ### Next Steps
 
-1. Begin Phase 4: Live Integrations
-   - Set up Node.js backend with Express
-   - Add PostgreSQL database with Prisma ORM
-   - Implement Amplitude integration
-   - Implement Salesforce integration
-   - Add real-time lead scoring webhook
-   - Build monitoring dashboard
+1. Complete Phase 4: Live Integrations
+   - Build Meta CAPI integration (send events to Conversions API)
+   - Build Google Ads integration (BullMQ queue for offline conversions)
+   - Update frontend with auth and new pages (Login, Monitoring, Settings)
+
+2. Future: Amplitude & Salesforce integrations (deferred until core is stable)
 
 ---
 

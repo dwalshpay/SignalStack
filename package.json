@@ -3,11 +3,20 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "workspaces": [
+    "backend"
+  ],
   "scripts": {
     "dev": "vite",
+    "dev:backend": "npm run dev -w backend",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:backend\"",
     "build": "tsc -b && vite build",
+    "build:backend": "npm run build -w backend",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:generate": "npm run db:generate -w backend",
+    "db:studio": "npm run db:studio -w backend"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
