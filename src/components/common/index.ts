@@ -7,3 +7,4 @@ export { Table } from './Table';
 export { Tooltip } from './Tooltip';
 export { ToastProvider, useToast } from './Toast';
 export { ErrorBoundary } from './ErrorBoundary';
+export { Modal } from './Modal';

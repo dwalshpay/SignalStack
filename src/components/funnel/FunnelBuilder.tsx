@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -15,7 +15,9 @@ import {
 } from '@dnd-kit/sortable';
 import { Card, Button } from '@/components/common';
 import { FunnelStep } from './FunnelStep';
+import { FunnelCSVImport, type ImportMode } from './FunnelCSVImport';
 import type { FunnelStep as FunnelStepType } from '@/types';
+import type { ParsedFunnelStep } from '@/lib/csvImportValidation';
 
 interface FunnelBuilderProps {
   steps: FunnelStepType[];
@@ -23,6 +25,7 @@ interface FunnelBuilderProps {
   onUpdateStep: (id: string, updates: Partial<FunnelStepType>) => void;
   onAddStep: (name?: string) => void;
   onRemoveStep: (id: string) => void;
+  onImportSteps: (steps: ParsedFunnelStep[], mode: ImportMode) => void;
   canAddStep: boolean;
   canRemoveStep: boolean;
 }
@@ -33,9 +36,12 @@ export const FunnelBuilder: React.FC<FunnelBuilderProps> = ({
   onUpdateStep,
   onAddStep,
   onRemoveStep,
+  onImportSteps,
   canAddStep,
   canRemoveStep
 }) => {
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -62,22 +68,37 @@ export const FunnelBuilder: React.FC<FunnelBuilderProps> = ({
     onAddStep(`Step ${stepNumber}`);
   }, [steps.length, onAddStep]);
 
-  const addButton = canAddStep ? (
-    <Button variant="outline" size="sm" onClick={handleAddStep}>
-      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-      </svg>
-      Add Step
-    </Button>
-  ) : (
-    <span className="text-sm text-gray-500">Max 10 steps</span>
+  const handleImport = useCallback((parsedSteps: ParsedFunnelStep[], mode: ImportMode) => {
+    onImportSteps(parsedSteps, mode);
+  }, [onImportSteps]);
+
+  const actionButtons = (
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" onClick={() => setIsImportModalOpen(true)}>
+        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        Import CSV
+      </Button>
+      {canAddStep ? (
+        <Button variant="outline" size="sm" onClick={handleAddStep}>
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add Step
+        </Button>
+      ) : (
+        <span className="text-sm text-gray-500">Max 10 steps</span>
+      )}
+    </div>
   );
 
   return (
+    <>
     <Card
       title="Conversion Funnel"
       subtitle="Define your conversion steps (drag to reorder)"
-      action={addButton}
+      action={actionButtons}
     >
       <DndContext
         sensors={sensors}
@@ -109,5 +130,13 @@ export const FunnelBuilder: React.FC<FunnelBuilderProps> = ({
         </div>
       )}
     </Card>
+
+    <FunnelCSVImport
+      isOpen={isImportModalOpen}
+      onClose={() => setIsImportModalOpen(false)}
+      onImport={handleImport}
+      currentStepCount={steps.length}
+    />
+    </>
   );
 };

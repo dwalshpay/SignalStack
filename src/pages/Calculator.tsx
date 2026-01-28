@@ -25,6 +25,7 @@ export const Calculator: React.FC = () => {
     addStep,
     removeStep,
     reorderSteps,
+    importFunnel,
     canAddStep,
     canRemoveStep
   } = useFunnel();
@@ -87,6 +88,7 @@ export const Calculator: React.FC = () => {
           onUpdateStep={updateStep}
           onAddStep={addStep}
           onRemoveStep={removeStep}
+          onImportSteps={importFunnel}
           canAddStep={canAddStep}
           canRemoveStep={canRemoveStep}
         />

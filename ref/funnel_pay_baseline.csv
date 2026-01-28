@@ -1,0 +1,8 @@
+name,conversion_rate,monthly_volume,event_name
+Website Visit,3.02,419241,website_visit
+Get Started Click,33.25,12660,get_started_click
+Email Captured,86.94,4210,email_captured
+Onbording Started,59.29,3660,onboarding_started
+ABN Submitted,61.9,2170,abn_submitted
+Account Verified,62.8,1343,account_verified
+Transcated,100,844,transacted
