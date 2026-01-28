@@ -17,7 +17,8 @@ interface ScoreDistributionProps {
 }
 
 export const ScoreDistribution: React.FC<ScoreDistributionProps> = ({ data }) => {
-  const getBarColor = (bucket: string): string => {
+  const getBarColor = (bucket: string | undefined): string => {
+    if (!bucket) return '#dc2626'; // default to red if bucket undefined
     const score = parseInt(bucket.split('-')[0], 10);
     if (score >= 70) return '#059669'; // green - high
     if (score >= 40) return '#d97706'; // amber - medium

@@ -43,12 +43,19 @@ export interface CalculatedValue {
   cumulativeProbability: number;
   baseValue: number;
   segmentValues: Record<string, number>;  // segmentId -> calculated value
-  volumeStatus: VolumeStatus;
+  volumeStatus: VolumeStatus;             // Legacy: uses Google thresholds
+  platformStatus: PlatformVolumeStatus;   // Platform-specific status
   recommendation: string;
 }
 
 // Volume status relative to platform thresholds
 export type VolumeStatus = 'sufficient' | 'borderline' | 'insufficient';
+
+// Platform-specific volume status (Google Ads vs Meta have different thresholds)
+export interface PlatformVolumeStatus {
+  google: VolumeStatus;
+  meta: VolumeStatus;
+}
 
 // Lead scoring rule (Phase 3)
 export type ScoringCategory = 'firmographic' | 'behavioural' | 'engagement';

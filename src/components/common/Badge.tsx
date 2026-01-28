@@ -1,5 +1,5 @@
 import React from 'react';
-import type { VolumeStatus } from '@/types';
+import type { VolumeStatus, PlatformVolumeStatus } from '@/types';
 
 type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'neutral';
 
@@ -67,5 +67,39 @@ export const VolumeStatusBadge: React.FC<{ status: VolumeStatus }> = ({ status }
     <Badge variant={variant} dot>
       {label}
     </Badge>
+  );
+};
+
+// Compact status indicator for a single platform
+const PlatformStatusIndicator: React.FC<{
+  platform: 'G' | 'M';
+  status: VolumeStatus;
+}> = ({ platform, status }) => {
+  const statusIcons: Record<VolumeStatus, { icon: string; color: string }> = {
+    sufficient: { icon: '✓', color: 'text-green-600' },
+    borderline: { icon: '!', color: 'text-yellow-600' },
+    insufficient: { icon: '✗', color: 'text-red-600' },
+  };
+
+  const { icon, color } = statusIcons[status];
+
+  return (
+    <span className={`inline-flex items-center ${color}`} title={`${platform === 'G' ? 'Google Ads' : 'Meta'}: ${status}`}>
+      <span className="text-xs font-medium text-gray-500 mr-0.5">{platform}:</span>
+      <span className="font-bold">{icon}</span>
+    </span>
+  );
+};
+
+// Dual platform volume status badge showing both Google and Meta status
+export const DualPlatformBadge: React.FC<{ platformStatus: PlatformVolumeStatus }> = ({
+  platformStatus,
+}) => {
+  return (
+    <div className="inline-flex items-center gap-2 px-2 py-1 bg-gray-50 rounded-md border border-gray-200">
+      <PlatformStatusIndicator platform="G" status={platformStatus.google} />
+      <span className="text-gray-300">|</span>
+      <PlatformStatusIndicator platform="M" status={platformStatus.meta} />
+    </div>
   );
 };

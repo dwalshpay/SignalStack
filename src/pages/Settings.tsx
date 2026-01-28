@@ -6,10 +6,11 @@ import {
   APIKeyManager,
   IntegrationManager,
   TeamMembers,
+  AlertSettings,
 } from '@/components/settings';
 import { usePermissions } from '@/hooks/usePermissions';
 
-type Tab = 'profile' | 'organization' | 'apiKeys' | 'integrations' | 'team';
+type Tab = 'profile' | 'organization' | 'apiKeys' | 'integrations' | 'team' | 'alerts';
 
 interface TabConfig {
   id: Tab;
@@ -23,6 +24,7 @@ const TABS: TabConfig[] = [
   { id: 'apiKeys', label: 'API Keys', adminOnly: true },
   { id: 'integrations', label: 'Integrations', adminOnly: true },
   { id: 'team', label: 'Team', adminOnly: true },
+  { id: 'alerts', label: 'Alerts', adminOnly: true },
 ];
 
 export const Settings: React.FC = () => {
@@ -43,6 +45,8 @@ export const Settings: React.FC = () => {
         return isAdmin ? <IntegrationManager /> : null;
       case 'team':
         return isAdmin ? <TeamMembers /> : null;
+      case 'alerts':
+        return isAdmin ? <AlertSettings /> : null;
       default:
         return <ProfileSettings />;
     }

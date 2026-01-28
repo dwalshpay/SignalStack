@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react';
 import { MainLayout } from '@/components/layout';
-import { Card, VolumeStatusBadge, useToast } from '@/components/common';
+import { Card, DualPlatformBadge, useToast } from '@/components/common';
 import { BusinessMetricsEditor } from '@/components/metrics';
 import { FunnelBuilder } from '@/components/funnel';
 import { SegmentList } from '@/components/segments';
-import { ScenarioCompare } from '@/components/results';
+import { ScenarioCompare, BreakevenAnalysis } from '@/components/results';
 import { useStore } from '@/store/useStore';
 import { useCalculator, useFunnel, useDataSync } from '@/hooks';
 import { downloadCSV } from '@/lib/export';
@@ -112,7 +112,7 @@ export const Calculator: React.FC = () => {
                     Volume
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Platform Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Probability
@@ -140,7 +140,7 @@ export const Calculator: React.FC = () => {
                       {value.monthlyVolume.toLocaleString()}/mo
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <VolumeStatusBadge status={value.volumeStatus} />
+                      <DualPlatformBadge platformStatus={value.platformStatus} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {(value.cumulativeProbability * 100).toFixed(2)}%
@@ -184,6 +184,13 @@ export const Calculator: React.FC = () => {
             </div>
           )}
         </Card>
+
+        {/* Breakeven Analysis */}
+        <BreakevenAnalysis
+          calculatedValues={calculatedValues}
+          segments={segments}
+          currency={metrics.currency}
+        />
 
         {/* Scenario Comparison */}
         <ScenarioCompare

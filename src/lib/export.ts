@@ -18,7 +18,8 @@ export function exportToCSV(
   const headers = [
     'Event',
     'Monthly Volume',
-    'Volume Status',
+    'Google Ads Status',
+    'Meta Status',
     'Conversion Rate',
     'Cumulative Probability',
     'Base Value',
@@ -29,7 +30,8 @@ export function exportToCSV(
   const rows = values.map(v => [
     v.stepName,
     v.monthlyVolume.toString(),
-    v.volumeStatus,
+    v.platformStatus?.google || v.volumeStatus,
+    v.platformStatus?.meta || v.volumeStatus,
     formatPercentage(v.conversionRate),
     formatPercentage(v.cumulativeProbability * 100, 2),
     formatCurrency(v.baseValue, currency),
@@ -108,7 +110,8 @@ export async function copyToClipboard(
     const headers = [
       'Event',
       'Volume',
-      'Status',
+      'Google Status',
+      'Meta Status',
       'Base Value',
       ...segments.map(s => s.name),
     ].join('\t');
@@ -116,7 +119,8 @@ export async function copyToClipboard(
     const rows = values.map(v => [
       v.stepName,
       v.monthlyVolume,
-      v.volumeStatus,
+      v.platformStatus?.google || v.volumeStatus,
+      v.platformStatus?.meta || v.volumeStatus,
       v.baseValue.toFixed(2),
       ...segments.map(s => (v.segmentValues[s.id] || 0).toFixed(2)),
     ].join('\t'));

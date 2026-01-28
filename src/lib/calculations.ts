@@ -3,7 +3,8 @@ import type {
   BusinessMetrics,
   AudienceSegment,
   CalculatedValue,
-  VolumeStatus
+  VolumeStatus,
+  PlatformVolumeStatus
 } from '@/types';
 import { PLATFORM_THRESHOLDS } from './constants';
 
@@ -31,28 +32,71 @@ export function getVolumeStatus(volume: number): VolumeStatus {
 }
 
 /**
+ * Determine volume status for a specific platform
+ * Google: 15 minimum, 50 recommended per 30 days
+ * Meta: 200 minimum and recommended per 30 days (50/week × 4)
+ */
+export function getVolumeStatusByPlatform(
+  volume: number,
+  platform: 'google' | 'meta'
+): VolumeStatus {
+  const thresholds = PLATFORM_THRESHOLDS[platform];
+  if (volume >= thresholds.recommended) {
+    return 'sufficient';
+  }
+  if (volume >= thresholds.minimum) {
+    return 'borderline';
+  }
+  return 'insufficient';
+}
+
+/**
+ * Get platform-specific volume status for both Google and Meta
+ */
+export function getPlatformVolumeStatus(volume: number): PlatformVolumeStatus {
+  return {
+    google: getVolumeStatusByPlatform(volume, 'google'),
+    meta: getVolumeStatusByPlatform(volume, 'meta'),
+  };
+}
+
+/**
  * Generate recommendation based on volume status and position in funnel
  */
 export function getRecommendation(
   status: VolumeStatus,
   stepIndex: number,
   totalSteps: number,
-  volume: number
+  volume: number,
+  platformStatus?: PlatformVolumeStatus
 ): string {
+  // Platform-specific recommendations when both statuses differ
+  if (platformStatus) {
+    const googleOk = platformStatus.google !== 'insufficient';
+    const metaOk = platformStatus.meta !== 'insufficient';
+
+    if (googleOk && !metaOk) {
+      return `Optimise for Google Ads (${volume}/mo meets threshold). Meta requires 200+/mo.`;
+    }
+    if (!googleOk && metaOk) {
+      return `Optimise for Meta (${volume}/mo meets threshold). Google Ads requires 15+/mo.`;
+    }
+  }
+
   if (status === 'sufficient') {
-    return 'Optimise toward this event';
+    return 'Optimise toward this event for both platforms';
   }
 
   if (status === 'borderline') {
-    return 'Usable for optimisation with caution. Consider combining with higher-volume events.';
+    return 'Usable for Google Ads with caution. Insufficient for Meta optimisation.';
   }
 
-  // Insufficient volume
+  // Insufficient volume for both
   if (stepIndex < totalSteps - 1) {
     return 'Use as measurement only. Optimise toward higher-volume events earlier in funnel.';
   }
 
-  return `Volume too low for optimisation (${volume}/month). Need ${PLATFORM_THRESHOLDS.google.minimum}+ for Google Ads.`;
+  return `Volume too low (${volume}/mo). Need 15+ for Google Ads, 200+ for Meta.`;
 }
 
 /**
@@ -100,11 +144,13 @@ export function calculateFunnelValues(
     }
 
     const volumeStatus = getVolumeStatus(step.monthlyVolume);
+    const platformStatus = getPlatformVolumeStatus(step.monthlyVolume);
     const recommendation = getRecommendation(
       volumeStatus,
       index,
       sortedSteps.length,
-      step.monthlyVolume
+      step.monthlyVolume,
+      platformStatus
     );
 
     return {
@@ -116,6 +162,7 @@ export function calculateFunnelValues(
       baseValue,
       segmentValues,
       volumeStatus,
+      platformStatus,
       recommendation,
     };
   });
@@ -168,4 +215,62 @@ export function calculateDerivedMetrics(
     adjustedCAC,
     maxEventValue,
   };
+}
+
+/**
+ * Calculate the breakeven multiplier for a segment
+ * Returns the minimum multiplier at which a segment becomes worth bidding on
+ *
+ * @param baseValue - The base value for the funnel step
+ * @param minBidThreshold - Minimum value worth bidding on (default $1)
+ * @returns The multiplier at which the segment becomes profitable
+ */
+export function calculateBreakevenMultiplier(
+  baseValue: number,
+  minBidThreshold: number = 1.0
+): number {
+  if (baseValue <= 0) return Infinity;
+  return minBidThreshold / baseValue;
+}
+
+/**
+ * Breakeven analysis result for a funnel step
+ */
+export interface BreakevenResult {
+  stepId: string;
+  stepName: string;
+  baseValue: number;
+  breakevenMultiplier: number;
+  currentConsumerMultiplier: number;
+  consumerValue: number;
+  isProfitable: boolean;
+  gapToBreakeven: number; // How far current multiplier is from breakeven
+}
+
+/**
+ * Calculate breakeven analysis for all funnel steps
+ * Determines at what point consumer traffic becomes worth bidding on
+ */
+export function calculateBreakevenAnalysis(
+  calculatedValues: CalculatedValue[],
+  consumerMultiplier: number = 0.1,
+  minBidThreshold: number = 1.0
+): BreakevenResult[] {
+  return calculatedValues.map((value) => {
+    const breakevenMultiplier = calculateBreakevenMultiplier(value.baseValue, minBidThreshold);
+    const consumerValue = value.baseValue * consumerMultiplier;
+    const isProfitable = consumerMultiplier >= breakevenMultiplier;
+    const gapToBreakeven = breakevenMultiplier - consumerMultiplier;
+
+    return {
+      stepId: value.stepId,
+      stepName: value.stepName,
+      baseValue: value.baseValue,
+      breakevenMultiplier,
+      currentConsumerMultiplier: consumerMultiplier,
+      consumerValue,
+      isProfitable,
+      gapToBreakeven,
+    };
+  });
 }

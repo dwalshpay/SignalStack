@@ -57,6 +57,23 @@ export const NegativeKeywords: React.FC = () => {
       label: 'Informational Searches',
       description: 'Research queries, not purchase intent',
     },
+    // Industry-specific categories
+    payments: {
+      label: 'Payments - Personal Use',
+      description: 'Block searches for personal payment solutions (Venmo, PayPal personal, etc.)',
+    },
+    saas: {
+      label: 'SaaS - Free Alternatives',
+      description: 'Exclude searches for free alternatives or open source replacements',
+    },
+    finance: {
+      label: 'Finance - Personal Banking',
+      description: 'Block personal banking and retail banking searches',
+    },
+    healthcare: {
+      label: 'Healthcare - Consumer',
+      description: 'Exclude consumer health and personal wellness searches',
+    },
     consumer_email: {
       label: 'Consumer Email Domains',
       description: 'Block ads to consumer email domain searches',

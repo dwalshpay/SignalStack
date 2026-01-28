@@ -1,6 +1,15 @@
 import { CONSUMER_EMAIL_DOMAINS } from '../constants';
 
-export type NegativeKeywordCategory = 'consumer_email' | 'job_seeker' | 'student' | 'free_seeker' | 'informational';
+export type NegativeKeywordCategory =
+  | 'consumer_email'
+  | 'job_seeker'
+  | 'student'
+  | 'free_seeker'
+  | 'informational'
+  | 'payments'
+  | 'saas'
+  | 'finance'
+  | 'healthcare';
 export type ExportFormat = 'plain' | 'google_editor' | 'meta';
 
 export interface NegativeKeywordList {
@@ -117,6 +126,105 @@ export const INFORMATIONAL_NEGATIVES: NegativeKeywordList = {
 };
 
 /**
+ * Industry-specific: Payments - Personal use keywords (PRD Section 2.6)
+ */
+export const PAYMENTS_NEGATIVES: NegativeKeywordList = {
+  category: 'payments',
+  label: 'Payments - Personal Use',
+  keywords: [
+    'personal payments',
+    'send money to friend',
+    'venmo',
+    'paypal personal',
+    'split bill',
+    'split the bill',
+    'peer to peer payment',
+    'p2p payment',
+    'wallet app',
+    'money transfer app',
+    'send money online',
+    'pay a friend',
+    'personal transaction',
+    'remittance',
+    'cash app',
+    'zelle personal',
+  ],
+};
+
+/**
+ * Industry-specific: SaaS - Free alternatives keywords (PRD Section 2.6)
+ */
+export const SAAS_NEGATIVES: NegativeKeywordList = {
+  category: 'saas',
+  label: 'SaaS - Free Alternatives',
+  keywords: [
+    'free trial forever',
+    'open source alternative',
+    'free version',
+    'free saas',
+    'open source tool',
+    'self hosted alternative',
+    'free software',
+    'open source replacement',
+    'free alternative to',
+    'free tier',
+    'freemium',
+    'no credit card',
+    'forever free',
+    'community edition',
+    'free plan',
+  ],
+};
+
+/**
+ * Industry-specific: Finance - Personal banking keywords
+ */
+export const FINANCE_NEGATIVES: NegativeKeywordList = {
+  category: 'finance',
+  label: 'Finance - Personal Banking',
+  keywords: [
+    'personal finance',
+    'personal banking',
+    'consumer bank account',
+    'savings account',
+    'retail banking',
+    'personal loan',
+    'individual investor',
+    'personal investment',
+    'home mortgage',
+    'personal credit',
+    'consumer credit',
+    'retail investor',
+    'personal budget',
+    'family finance',
+  ],
+};
+
+/**
+ * Industry-specific: Healthcare - Consumer services keywords
+ */
+export const HEALTHCARE_NEGATIVES: NegativeKeywordList = {
+  category: 'healthcare',
+  label: 'Healthcare - Consumer Services',
+  keywords: [
+    'consumer health',
+    'personal healthcare',
+    'at home treatment',
+    'self diagnosis',
+    'home remedy',
+    'alternative medicine',
+    'wellness app',
+    'fitness app',
+    'personal health',
+    'home health',
+    'self care',
+    'patient portal',
+    'telehealth personal',
+    'health insurance personal',
+  ],
+};
+
+/**
  * Generate email domain negatives from the consumer blocklist
  */
 export function generateEmailDomainNegatives(): NegativeKeywordList {
@@ -142,6 +250,12 @@ export function getAllNegativeKeywordLists(): NegativeKeywordList[] {
     JOB_SEEKER_NEGATIVES,
     STUDENT_NEGATIVES,
     INFORMATIONAL_NEGATIVES,
+    // Industry-specific lists
+    PAYMENTS_NEGATIVES,
+    SAAS_NEGATIVES,
+    FINANCE_NEGATIVES,
+    HEALTHCARE_NEGATIVES,
+    // Consumer email domains
     generateEmailDomainNegatives(),
   ];
 }

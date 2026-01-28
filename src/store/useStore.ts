@@ -7,6 +7,9 @@ import type {
   ScoringRule,
   GTMValidationResult
 } from '@/types';
+import type { AlertRule, AlertNotificationPreferences } from '@/types/alerts';
+import { DEFAULT_ALERT_RULES } from '@/lib/alerts';
+import { DEFAULT_NOTIFICATION_PREFERENCES } from '@/types/alerts';
 import {
   DEFAULT_FUNNEL,
   DEFAULT_METRICS,
@@ -26,6 +29,10 @@ interface StoreState {
   // Validation state (Phase 3)
   gtmValidationResult: GTMValidationResult | null;
   emqMatchKeys: Record<string, boolean>;
+
+  // Alert configuration (Phase 4)
+  alertRules: AlertRule[];
+  alertNotificationPreferences: AlertNotificationPreferences;
 
   // Funnel actions
   setFunnel: (funnel: FunnelStep[]) => void;
@@ -57,6 +64,15 @@ interface StoreState {
   setEMQMatchKey: (key: string, available: boolean) => void;
   resetValidation: () => void;
 
+  // Alert actions (Phase 4)
+  setAlertRules: (rules: AlertRule[]) => void;
+  addAlertRule: (rule: AlertRule) => void;
+  updateAlertRule: (id: string, updates: Partial<AlertRule>) => void;
+  removeAlertRule: (id: string) => void;
+  toggleAlertRule: (id: string) => void;
+  setAlertNotificationPreferences: (prefs: AlertNotificationPreferences) => void;
+  resetAlertRules: () => void;
+
   // Global actions
   reset: () => void;
 }
@@ -84,6 +100,9 @@ const initialState = {
   scoringRules: [] as ScoringRule[],
   gtmValidationResult: null as GTMValidationResult | null,
   emqMatchKeys: defaultEMQMatchKeys,
+  // Alert configuration
+  alertRules: DEFAULT_ALERT_RULES,
+  alertNotificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
 };
 
 export const useStore = create<StoreState>()(
@@ -185,6 +204,37 @@ export const useStore = create<StoreState>()(
         emqMatchKeys: defaultEMQMatchKeys
       }),
 
+      // Alert actions (Phase 4)
+      setAlertRules: (alertRules) => set({ alertRules }),
+
+      addAlertRule: (rule) => set((state) => ({
+        alertRules: [...state.alertRules, rule]
+      })),
+
+      updateAlertRule: (id, updates) => set((state) => ({
+        alertRules: state.alertRules.map((rule) =>
+          rule.id === id ? { ...rule, ...updates, updatedAt: new Date().toISOString() } : rule
+        )
+      })),
+
+      removeAlertRule: (id) => set((state) => ({
+        alertRules: state.alertRules.filter((rule) => rule.id !== id)
+      })),
+
+      toggleAlertRule: (id) => set((state) => ({
+        alertRules: state.alertRules.map((rule) =>
+          rule.id === id ? { ...rule, enabled: !rule.enabled } : rule
+        )
+      })),
+
+      setAlertNotificationPreferences: (alertNotificationPreferences) =>
+        set({ alertNotificationPreferences }),
+
+      resetAlertRules: () => set({
+        alertRules: DEFAULT_ALERT_RULES,
+        alertNotificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES
+      }),
+
       // Reset to defaults
       reset: () => set(initialState),
     }),
@@ -203,3 +253,5 @@ export const useSegments = () => useStore((state) => state.segments);
 export const useScoringRules = () => useStore((state) => state.scoringRules);
 export const useGTMValidationResult = () => useStore((state) => state.gtmValidationResult);
 export const useEMQMatchKeys = () => useStore((state) => state.emqMatchKeys);
+export const useAlertRules = () => useStore((state) => state.alertRules);
+export const useAlertNotificationPreferences = () => useStore((state) => state.alertNotificationPreferences);

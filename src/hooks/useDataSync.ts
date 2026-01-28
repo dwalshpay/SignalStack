@@ -52,6 +52,7 @@ export function useDataSync(options: UseDataSyncOptions = {}): UseDataSyncResult
   const [error, setError] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [backendFunnelId, setBackendFunnelId] = useState<string | null>(null);
+  const [hasSynced, setHasSynced] = useState(false);
 
   // Load data from backend
   const syncFromBackend = useCallback(async () => {
@@ -166,12 +167,13 @@ export function useDataSync(options: UseDataSyncOptions = {}): UseDataSyncResult
     onSuccess,
   ]);
 
-  // Auto-sync on mount when authenticated
+  // Auto-sync on mount when authenticated (only once)
   useEffect(() => {
-    if (autoSync && isAuthenticated && isInitialized) {
+    if (autoSync && isAuthenticated && isInitialized && !hasSynced) {
+      setHasSynced(true);
       syncFromBackend();
     }
-  }, [autoSync, isAuthenticated, isInitialized, syncFromBackend]);
+  }, [autoSync, isAuthenticated, isInitialized, hasSynced, syncFromBackend]);
 
   return {
     status,
